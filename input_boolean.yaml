@@ -1,0 +1,22 @@
+# Set when charging for battery protection
+# Prevents reset from firing and controls stop logic
+scylla_protection_charge_active:
+  name: "Scylla protection charge active"
+  initial: false
+  icon: mdi:battery-lock
+
+# Set when a software update paused charging — update_finished only resumes
+# charging when this is on, so a restart or unrelated update can't start a charge
+scylla_update_in_progress:
+  name: "Scylla update in progress"
+  initial: false
+  icon: mdi:cloud-download
+
+# Mirrors enable_battery_protection from the scheduler (written on every run).
+# true  = NMC/NCA: limits 50% / 51% are capped at 42% / 47% and charging stops at the cap
+# false = LFP: no caps, no stop, no immediate protection charge
+# initial: true so protection stays on until the scheduler has written the real value.
+scylla_battery_protection_enabled:
+  name: "Scylla battery protection enabled"
+  initial: true
+  icon: mdi:battery-heart-variant

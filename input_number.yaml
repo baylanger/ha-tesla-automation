@@ -1,0 +1,153 @@
+# Target range in km (set to 0 to use target % instead)
+scylla_target_range_km:
+  name: "Scylla target range"
+  min: 0
+  max: 700
+  step: 10
+  initial: 0
+  unit_of_measurement: "km"
+  icon: mdi:map-marker-distance
+
+# Target range in mi (set to 0 to use target % instead)
+scylla_target_range_mi:
+  name: "Scylla target range"
+  min: 0
+  max: 450
+  step: 5
+  initial: 0
+  unit_of_measurement: "mi"
+  icon: mdi:map-marker-distance
+
+# Battery capacity — update if your car differs from 75 kWh
+scylla_battery_capacity_kwh:
+  name: "Scylla battery capacity (kWh)"
+  min: 40
+  max: 120
+  step: 0.5
+  initial: 75
+  unit_of_measurement: "kWh"
+  icon: mdi:battery
+
+# Auto-set by automation when car is plugged in based on GPS country
+scylla_slow_voltage:
+  name: "EV slow charging voltage"
+  min: 100
+  max: 120
+  step: 1
+  initial: 120
+  unit_of_measurement: "V"
+  icon: mdi:lightning-bolt
+
+# Auto-set by automation when car is plugged in based on GPS country
+scylla_fast_voltage:
+  name: "EV fast charging voltage"
+  min: 200
+  max: 400
+  step: 1
+  initial: 240
+  unit_of_measurement: "V"
+  icon: mdi:lightning-bolt-circle
+
+# Battery protection thresholds — auto-set by blueprint at first run
+scylla_protection_low:
+  name: "Scylla protection cap low (≤50%)"
+  min: 30
+  max: 50
+  step: 1
+  initial: 42
+  unit_of_measurement: "%"
+  icon: mdi:battery-lock
+
+scylla_protection_mid:
+  name: "Scylla protection cap mid (51%)"
+  min: 40
+  max: 55
+  step: 1
+  initial: 47
+  unit_of_measurement: "%"
+  icon: mdi:battery-lock-outline
+
+# Hysteresis gap for the protection-cap floor (scylla_protection_low). The
+# car's SOC reading settles ~1% lower right after charging current stops
+# (resting vs. under-load voltage) — without a gap, this settling alone
+# looks like "dropped below cap" and immediately restarts charging. Resume
+# threshold = protection_low - this gap. Floor of 2 enforced since real-world
+# settling runs close to 1%; a 1% gap would recreate the exact same problem.
+scylla_protection_hysteresis:
+  name: "Scylla protection hysteresis"
+  min: 2
+  max: 10
+  step: 1
+  initial: 2
+  unit_of_measurement: "%"
+  icon: mdi:swap-vertical-bold
+
+# Persistent set charge limit — always available, survives restarts
+scylla_set_charge_limit:
+  name: "Scylla set charge limit"
+  min: 50
+  max: 100
+  step: 1
+  unit_of_measurement: "%"
+  icon: mdi:battery-charging
+
+# Persistent set charging amps — always available, survives restarts
+scylla_set_charging_amps:
+  name: "Scylla set charging amps"
+  min: 5
+  max: 48
+  step: 1
+  unit_of_measurement: "A"
+  icon: mdi:current-ac
+
+# Sanity ceiling for amps readings from the car/integration — readings above
+# this are treated as implausible glitches and rejected, not synced to the
+# UI. 48A is the Tesla onboard AC charger's hard physical ceiling (Model 3
+# and most current models) — nothing above that is ever real, regardless of
+# location or charger type.
+scylla_amps_sanity_max:
+  name: "Scylla amps sanity max"
+  min: 10
+  max: 48
+  step: 1
+  initial: 40
+  unit_of_measurement: "A"
+  icon: mdi:alert-decagram-outline
+
+# Last valid battery % seen from the car — fallback while the car sleeps.
+# Deliberately has no `initial:` so the value survives HA restarts.
+scylla_last_known_battery:
+  name: "Scylla last known battery"
+  min: 0
+  max: 100
+  step: 0.1
+  unit_of_measurement: "%"
+  icon: mdi:battery-clock
+
+# Amps restored on arrival at home and after each session reset
+scylla_default_charging_amps:
+  name: "Scylla default charging amps"
+  min: 5
+  max: 48
+  step: 1
+  initial: 27
+  unit_of_measurement: "A"
+  icon: mdi:current-ac
+
+# Scylla climate target temperature
+scylla_climate_target_temp:
+  name: Scylla Climate Target Temp
+  min: 16
+  max: 28
+  step: 0.5
+  unit_of_measurement: "°C"
+  icon: mdi:thermometer
+
+# Scylla climate turn on delay
+scylla_climate_prep_delay_minutes:
+  name: Scylla Climate Prep Delay
+  min: 0
+  max: 30
+  step: 1
+  unit_of_measurement: "min"
+  icon: mdi:timer-outline

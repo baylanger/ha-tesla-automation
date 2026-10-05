@@ -1,0 +1,31 @@
+- resource_template: >
+    https://nominatim.openstreetmap.org/reverse?format=json&lat={{ state_attr('device_tracker.scylla_location', 'latitude') }}&lon={{ state_attr('device_tracker.scylla_location', 'longitude') }}
+  scan_interval: 1800
+  headers:
+    User-Agent: "HomeAssistant"
+  sensor:
+    - name: Scylla Location Country Code
+      value_template: >
+        {% set country = value_json.get('address', {}).get('country_code') %}
+        {{ country | upper if country else this.state }}
+
+- resource_template: >
+    https://api.open-meteo.com/v1/forecast?latitude={{ state_attr('device_tracker.scylla_location', 'latitude') }}&longitude={{ state_attr('device_tracker.scylla_location', 'longitude') }}&current=temperature_2m&temperature_unit=celsius
+  scan_interval: 1800
+  headers:
+    User-Agent: "HomeAssistant"
+  sensor:
+    - name: Scylla Location Weather Temp
+      unique_id: scylla_location_weather_temp
+      value_template: >
+        {% set temp = value_json.get('current', {}).get('temperature_2m') %}
+        {% if temp is not none %}
+          {{ temp }}
+        {% elif this.state is defined and this.state | is_number %}
+          {{ this.state }}
+        {% else %}
+          0
+        {% endif %}
+      unit_of_measurement: "°C"
+      device_class: temperature
+      state_class: measurement

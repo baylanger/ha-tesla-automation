@@ -1,0 +1,368 @@
+# ─────────────────────────────────────────────
+# TESLA SCYLLA
+# ─────────────────────────────────────────────
+- sensor:
+  - name: Scylla Minute to Full Charge
+    unit_of_measurement: m
+    icon: mdi:clock-outline
+    unique_id: scylla_minute_to_full_charge
+    state: "{{ (states('sensor.scylla_time_to_full_charge') | float * 60 ) | round(0) }}"
+
+- sensor:
+    # Range in miles. The car's range sensors come from TeslaMate over MQTT and are always
+    # in km, whatever the car's own unit setting, so miles are a plain conversion.
+    - name: Scylla Est Battery Range Mi
+      unique_id: scylla_est_battery_range_mi
+      unit_of_measurement: mi
+      icon: mdi:gauge
+      availability: "{{ states('sensor.scylla_est_battery_range') | is_number }}"
+      state: >
+        {{ (states('sensor.scylla_est_battery_range') | float(0) / 1.609344) | round(1) }}
+
+    # Optional extras (not used by the scheduler). Confirm sensor.scylla_rated_battery_range and
+    # sensor.scylla_ideal_battery_range exist in Developer Tools → States.
+    - name: Scylla Rated Battery Range Mi
+      unique_id: scylla_rated_battery_range_mi
+      unit_of_measurement: mi
+      icon: mdi:gauge
+      availability: "{{ states('sensor.scylla_rated_battery_range') | is_number }}"
+      state: >
+        {{ (states('sensor.scylla_rated_battery_range') | float(0) / 1.609344) | round(1) }}
+
+    - name: Scylla Ideal Battery Range Mi
+      unique_id: scylla_ideal_battery_range_mi
+      unit_of_measurement: mi
+      icon: mdi:gauge
+      availability: "{{ states('sensor.scylla_ideal_battery_range') | is_number }}"
+      state: >
+        {{ (states('sensor.scylla_ideal_battery_range') | float(0) / 1.609344) | round(1) }}
+
+# These sensors to be added for our Tesla Smart Charge automation
+- sensor:
+    # Voltage map — kept here so automation doesn't need to parse it every run
+    - name: "EV Voltage Map"
+      unique_id: ev_voltage_map
+      state: "ready"
+      attributes:
+        map: >
+          {{
+            {
+              "AF":"220,220","AL":"230,230","DZ":"230,230","AD":"230,230","AO":"220,220",
+              "AG":"230,230","AR":"220,220","AM":"230,230","AU":"230,230","AT":"230,400",
+              "AZ":"220,220","BS":"120,240","BH":"230,230","BD":"220,220","BB":"115,230",
+              "BY":"220,220","BE":"230,400","BZ":"110,220","BJ":"220,220","BT":"230,230",
+              "BO":"115,230","BA":"230,230","BW":"230,230","BR":"127,220","BN":"240,240",
+              "BG":"230,400","BF":"220,220","BI":"220,220","CV":"230,230","KH":"230,230",
+              "CM":"220,220","CA":"120,240","CF":"220,220","TD":"220,220","CL":"220,220",
+              "CN":"220,220","CO":"110,220","KM":"220,220","CG":"230,230","CR":"120,240",
+              "HR":"230,400","CU":"110,220","CY":"230,230","CZ":"230,400","DK":"230,400",
+              "DJ":"220,220","DM":"230,230","DO":"110,220","EC":"110,220","EG":"220,220",
+              "SV":"115,230","GQ":"220,220","ER":"230,230","EE":"230,400","SZ":"230,230",
+              "ET":"220,220","FJ":"240,240","FI":"230,400","FR":"230,400","GA":"220,220",
+              "GM":"230,230","GE":"220,220","DE":"230,400","GH":"230,230","GR":"230,400",
+              "GD":"230,230","GT":"120,240","GN":"220,220","GW":"220,220","GY":"110,220",
+              "HT":"110,220","HN":"110,220","HU":"230,400","IS":"230,400","IN":"230,230",
+              "ID":"230,230","IR":"220,220","IQ":"230,230","IE":"230,400","IL":"230,230",
+              "IT":"230,400","JM":"110,220","JP":"100,200","JO":"230,230","KZ":"220,220",
+              "KE":"240,240","KI":"240,240","KW":"240,240","KG":"220,220","LA":"230,230",
+              "LV":"230,400","LB":"230,230","LS":"220,220","LR":"120,240","LY":"127,230",
+              "LI":"230,400","LT":"230,400","LU":"230,400","MG":"127,220","MW":"230,230",
+              "MY":"240,240","MV":"230,230","ML":"220,220","MT":"230,230","MH":"120,240",
+              "MR":"220,220","MU":"230,230","MX":"120,240","FM":"120,240","MD":"220,220",
+              "MC":"230,230","MN":"230,230","ME":"230,400","MA":"220,220","MZ":"220,220",
+              "MM":"230,230","NA":"220,220","NR":"240,240","NP":"230,230","NL":"230,400",
+              "NZ":"230,230","NI":"120,240","NE":"220,220","NG":"240,240","MK":"230,400",
+              "NO":"230,400","OM":"240,240","PK":"230,230","PW":"120,240","PA":"120,240",
+              "PG":"240,240","PY":"220,220","PE":"220,220","PH":"220,220","PL":"230,400",
+              "PT":"230,400","QA":"240,240","RO":"230,400","RU":"220,220","RW":"230,230",
+              "KN":"230,230","LC":"230,230","VC":"230,230","WS":"230,230","SM":"230,230",
+              "ST":"220,220","SA":"127,220","SN":"230,230","RS":"230,400","SC":"240,240",
+              "SL":"230,230","SG":"230,230","SK":"230,400","SI":"230,400","SB":"240,240",
+              "SO":"220,220","ZA":"230,230","SS":"230,230","ES":"230,400","LK":"230,230",
+              "SD":"230,230","SR":"127,220","SE":"230,400","CH":"230,400","SY":"220,220",
+              "TW":"110,220","TJ":"220,220","TZ":"230,230","TH":"220,220","TL":"220,220",
+              "TG":"220,220","TO":"240,240","TT":"115,230","TN":"230,230","TR":"230,400",
+              "TM":"220,220","TV":"230,230","UG":"240,240","UA":"220,220","AE":"220,220",
+              "GB":"230,230","US":"120,240","UY":"220,220","UZ":"220,220","VU":"230,230",
+              "VE":"120,240","VN":"220,220","YE":"230,230","ZM":"230,230","ZW":"220,220"
+            }
+          }}
+
+    # Always-available usable battery level — holds last known value when the
+    # car sleeps and sensor.scylla_usable_battery_level goes unavailable.
+    # This is what closed the "missed 4:51 charge" bug: the scheduler's gate
+    # condition used the raw sensor directly, and float(0) on 'unavailable'
+    # made the gate evaluate to 0, silently skipping the whole schedule
+    # instead of just re-arming it on the next trigger.
+    - name: "Scylla Usable Battery Level Safe"
+      unique_id: scylla_usable_battery_level_safe
+      unit_of_measurement: "%"
+      device_class: battery
+      state_class: measurement
+      state: >
+        {% set raw = states('sensor.scylla_usable_battery_level') %}
+        {% if raw not in ['unknown', 'unavailable', 'none', None] %}
+          {{ raw | float }}
+        {% else %}
+          {{ states('input_number.scylla_last_known_battery') | float(0) }}
+        {% endif %}
+
+    # Always-available charge limit — falls back to sensor when number is unavailable
+    # FIXED: sensor.scylla_charge_limit_soc updates immediately (comes straight
+    # off vehicle_data), while number.scylla_charge_limit can lag behind it by
+    # a poll cycle. Prefer the SOC sensor whenever it's present.
+    - name: "Scylla Charge Limit"
+      unique_id: scylla_charge_limit
+      unit_of_measurement: "%"
+      state_class: measurement
+      state: >
+        {% set soc = states('sensor.scylla_charge_limit_soc') %}
+        {% set num = states('number.scylla_charge_limit') %}
+        {% set helper = states('input_number.scylla_set_charge_limit') %}
+        {% if soc not in ['unknown', 'unavailable', 'none', None] %}
+          {{ soc | float(50) }}
+        {% elif num not in ['unknown', 'unavailable'] %}
+          {{ num | float(50) }}
+        {% else %}
+          {{ helper | float(50) }}
+        {% endif %}
+
+    # Always-available charging amps — falls back to input_number when car asleep
+    - name: "Scylla Charging Amps"
+      unique_id: scylla_charging_amps
+      unit_of_measurement: "A"
+      state_class: measurement
+      state: >
+        {% set set_amps = states('input_number.scylla_set_charging_amps') | float(27) %}
+        {% set num = states('number.scylla_charging_amps') %}
+        {% if is_state('binary_sensor.scylla_charging', 'on') and num not in ['unknown', 'unavailable'] %}
+          {{ num | float(27) }}
+        {% else %}
+          {{ set_amps }}
+        {% endif %}
+
+    # Minutes to charge 1% based on selected speed and live voltage
+    - name: "Scylla Charger 1 Percent Increase Time"
+      unique_id: scylla_charger_1percent_increase_time
+      unit_of_measurement: "min"
+      state_class: measurement
+      state: >
+        {% set amps = states('sensor.scylla_charging_amps') | float(0) %}
+        {% set capacity = states('input_number.scylla_battery_capacity_kwh') | float(75) %}
+        {% set live_voltage = states('sensor.scylla_charger_voltage') | float(0) %}
+        {% set speed_raw = states('input_select.scylla_charging_speed') %}
+        {% set speed = 'Fast' if speed_raw == 'Fast' else 'Slow' %}
+        {% if live_voltage > 75 %}
+          {% set voltage = live_voltage %}
+        {% elif speed == 'Fast' %}
+          {% set voltage = states('input_number.scylla_fast_voltage') | float(240) %}
+        {% else %}
+          {% set voltage = states('input_number.scylla_slow_voltage') | float(120) %}
+        {% endif %}
+        {% if amps > 0 and voltage > 0 %}
+          {{ ((capacity * 1000 * 0.01) / (voltage * amps) * 60) | round(2) }}
+        {% else %}
+          unknown
+        {% endif %}
+
+    # Actual charge target after applying battery protection logic
+    - name: "Scylla Charge Target Pct"
+      unique_id: scylla_charge_target_pct
+      unit_of_measurement: "%"
+      state_class: measurement
+      state: >
+        {% set limit = states('input_number.scylla_set_charge_limit') | float(50) %}
+        {% set low = states('input_number.scylla_protection_low') | float(42) %}
+        {% set mid = states('input_number.scylla_protection_mid') | float(47) %}
+        {% set target_km = states('input_number.scylla_target_range_km') | float(0) %}
+        {% set target_mi = states('input_number.scylla_target_range_mi') | float(0) %}
+        {% set target_range = target_km if target_km > 0 else target_mi %}
+        {% set current_range = (states('sensor.scylla_est_battery_range') if target_km > 0 else states('sensor.scylla_est_battery_range_mi')) | float(0) %}
+        {% set current_pct = states('sensor.scylla_usable_battery_level_safe') | float(0) %}
+        {% set protection = is_state('input_boolean.scylla_battery_protection_enabled', 'on') %}
+        {% set range_based = limit %}
+        {% if target_range > 0 and current_pct > 0 and current_range > 0 %}
+          {% set full_range = current_range / (current_pct / 100) %}
+          {% set range_based = [(target_range / full_range * 100) | round(0) | int, 100] | min %}
+        {% endif %}
+        {% if protection and range_based <= 50 %}
+          {{ low }}
+        {% elif protection and range_based == 51 %}
+          {{ mid }}
+        {% else %}
+          {{ range_based }}
+        {% endif %}
+
+    # Estimated charge time based on selected speed and actual target
+    - name: "Scylla Charge Time"
+      unique_id: scylla_charge_time
+      state: >
+        {% set current_pct = states('sensor.scylla_usable_battery_level_safe') | float(0) %}
+        {% set charge_target_pct = states('sensor.scylla_charge_target_pct') | float(0) %}
+        {% set protection_low = states('input_number.scylla_protection_low') | float(42) %}
+        {% set amps = states('sensor.scylla_charging_amps') | float(27) %}
+        {% set capacity = states('input_number.scylla_battery_capacity_kwh') | float(75) %}
+        {% set speed_raw = states('input_select.scylla_charging_speed') %}
+        {% set speed = 'Fast' if speed_raw == 'Fast' else 'Slow' %}
+        {% set slow_v = states('input_number.scylla_slow_voltage') | float(120) %}
+        {% set fast_v = states('input_number.scylla_fast_voltage') | float(240) %}
+        {% set live_voltage = states('sensor.scylla_charger_voltage') | float(0) %}
+        {% set voltage = live_voltage if live_voltage > 75 else (fast_v if speed == 'Fast' else slow_v) %}
+        {% set charge_pct_needed = [charge_target_pct - current_pct, 0] | max %}
+        {% if charge_pct_needed <= 0 %}
+          Already at target
+        {% elif amps > 0 and voltage > 0 %}
+          {% set min_per_pct = ((capacity * 1000 * 0.01) / (voltage * amps) * 60) %}
+          {% set total_minutes = (charge_pct_needed * min_per_pct) | round(0) | int %}
+          {% set h = total_minutes // 60 %}
+          {% set m = total_minutes % 60 %}
+          {{ h }}h {{ m }}min
+        {% else %}
+          unknown
+        {% endif %}
+
+    # Scheduled charge start time based on selected speed and actual target
+    - name: "Scylla Charge Start At"
+      unique_id: scylla_charge_start_at
+      state: >
+        {% set current_pct = states('sensor.scylla_usable_battery_level_safe') | float(0) %}
+        {% set charge_target_pct = states('sensor.scylla_charge_target_pct') | float(0) %}
+        {% set protection_low = states('input_number.scylla_protection_low') | float(42) %}
+        {% set amps = states('sensor.scylla_charging_amps') | float(27) %}
+        {% set capacity = states('input_number.scylla_battery_capacity_kwh') | float(75) %}
+        {% set speed_raw = states('input_select.scylla_charging_speed') %}
+        {% set speed = 'Fast' if speed_raw == 'Fast' else 'Slow' %}
+        {% set slow_v = states('input_number.scylla_slow_voltage') | float(120) %}
+        {% set fast_v = states('input_number.scylla_fast_voltage') | float(240) %}
+        {% set live_voltage = states('sensor.scylla_charger_voltage') | float(0) %}
+        {% set voltage = live_voltage if live_voltage > 75 else (fast_v if speed == 'Fast' else slow_v) %}
+        {% set charge_pct_needed = [charge_target_pct - current_pct, 0] | max %}
+        {% set departure = states('input_datetime.scylla_departure_time') %}
+        {% set t = departure.split(':') %}
+        {% set dep_seconds = t[0]|int * 3600 + t[1]|int * 60 %}
+        {% if charge_pct_needed <= 0 %}
+          No charge needed
+        {% elif is_state('input_boolean.scylla_battery_protection_enabled', 'on') and current_pct < protection_low %}
+          Now
+        {% elif amps > 0 and voltage > 0 %}
+          {% set min_per_pct = ((capacity * 1000 * 0.01) / (voltage * amps) * 60) %}
+          {% set total_minutes = (charge_pct_needed * min_per_pct) | round(0) | int %}
+          {% set start_seconds = dep_seconds - total_minutes * 60 %}
+          {% set start_seconds = start_seconds if start_seconds >= 0 else start_seconds + 86400 %}
+          {% set sh = (start_seconds // 3600) % 24 %}
+          {% set sm = (start_seconds % 3600) // 60 %}
+          {{ '%02d:%02d' | format(sh, sm) }}
+        {% else %}
+          unknown
+        {% endif %}
+
+    - name: Scylla Charging State UI
+      unique_id: teslamate_1_charging_state_ui
+      state: "{{ states('sensor.scylla_charging_state') }}"
+      icon: >
+        {% set s = states('sensor.scylla_charging_state') %}
+
+        {% if s == 'Charging' %}
+          mdi:battery-charging
+        {% elif s == 'Disconnected' %}
+          mdi:battery-off-outline
+        {% elif s == 'Stopped' %}
+          mdi:battery-alert-variant-outline
+        {% elif s == 'NoPower' %}
+          mdi:power-plug-off
+        {% elif s == 'Complete' %}
+          mdi:check-circle
+        {% else %}
+          mdi:battery
+        {% endif %}
+
+    # Car GPS location as "lat,lon" string for Waze Travel Time origin
+    - name: "Scylla GPS Location"
+      unique_id: scylla_gps_location
+      state: >
+        {{ state_attr('device_tracker.scylla_location', 'latitude') }},{{ state_attr('device_tracker.scylla_location', 'longitude') }}
+
+   # Battery % needed to drive home + 33% buffer (only meaningful when away)
+    - name: "Scylla Return Home Battery Pct"
+      unique_id: scylla_return_home_battery_pct
+      unit_of_measurement: "%"
+      state: >
+        {% set current_pct = states('sensor.scylla_usable_battery_level_safe') | float(0) %}
+        {% set est_range = states('sensor.scylla_est_battery_range') | float(0) %}
+        {% set distance = state_attr('sensor.waze_scylla_to_home', 'distance') | float(0) %}
+        {% if current_pct > 0 and est_range > 0 and distance > 0
+              and not is_state('device_tracker.scylla_location', 'home') %}
+          {% set full_range = est_range / (current_pct / 100) %}
+          {% set pct_needed = (distance / full_range * 100) + 33 %}
+          {{ pct_needed | round(0) | int }}
+        {% else %}
+          0
+        {% endif %}
+
+    # Distance to home from Waze (km)
+    - name: "Scylla Distance To Home"
+      unique_id: scylla_distance_to_home
+      unit_of_measurement: "km"
+      state: >
+        {% if not is_state('device_tracker.scylla_location', 'home') %}
+          {{ state_attr('sensor.waze_scylla_to_home', 'distance') | float(0) | round(1) }}
+        {% else %}
+          0
+        {% endif %}
+
+    - name: "Scylla Climate Suggested Lead Minutes"
+      unique_id: scylla_climate_suggested_lead_minutes
+      icon: mdi:timer-outline
+      unit_of_measurement: "min"
+      state: >
+        {% set outside = states('sensor.scylla_outside_temp') | float(15) %}
+        {% set inside = states('sensor.scylla_inside_temp') | float(15) %}
+        {# Resistive heating = slower warm-up than heat pump, longer lead times #}
+        {% if inside <= -10 %}
+          40
+        {% elif inside <= 0 %}
+          30
+        {% elif inside <= 10 %}
+          20
+        {% elif inside <= 18 %}
+          10
+        {% elif outside >= 32 or inside >= 32 %}
+          {# AC is fast, doesn't need much lead time #}
+          10
+        {% elif outside >= 25 %}
+          8
+        {% else %}
+          5
+        {% endif %}
+
+    # Scylla climate target temperature based on GPS outdoor + car indoor temperatures
+    - name: "Scylla Climate Suggested Target Temp"
+      unique_id: scylla_climate_suggested_target_temp
+      icon: mdi:thermometer
+      unit_of_measurement: "°C"
+      state: >
+        {% set is_home = states('sensor.scylla_geofence') == 'Home' %}
+        {% set is_offline = states('sensor.scylla_state') == 'offline' %}
+        {% set gps_weather = states('sensor.scylla_location_weather_temp') | float(None) %}
+        {% set sensor_outside = states('sensor.scylla_outside_temp') | float(15) %}
+        {% if is_offline and not is_home and gps_weather is not none %}
+          {% set outside = gps_weather %}
+        {% else %}
+          {% set outside = sensor_outside %}
+        {% endif %}
+        {% set inside = states('sensor.scylla_inside_temp') | float(15) %}
+        {% set cold_ref = [outside, inside] | min %}
+        {% set hot_ref = [outside, inside] | max %}
+        {% if cold_ref <= -15 %}
+          24
+        {% elif cold_ref <= 0 %}
+          23
+        {% elif cold_ref <= 10 %}
+          21
+        {% elif hot_ref >= 32 %}
+          19
+        {% elif hot_ref >= 25 %}
+          20
+        {% else %}
+          21
+        {% endif %}

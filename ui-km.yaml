@@ -1,0 +1,139 @@
+## DASHBOARD CARD — KM VERSION
+## Paste this as a Manual card in your HA dashboard
+
+type: vertical-stack
+cards:
+  # ── Charger status badge ─────────────────────────────────────────────────
+  - type: markdown
+    content: >
+      {% set charging_state = states('sensor.scylla_charging_state') | lower %}
+      {% set is_connected = is_state('binary_sensor.scylla_charger', 'on') %}
+      {% set is_charging = charging_state == 'charging' %}
+      {% set current_pct = states('sensor.scylla_usable_battery_level') | float(0) %}
+      {% set protection_low = states('input_number.scylla_protection_low') | float(42) %}
+      {% set protection_on = is_state('input_boolean.scylla_battery_protection_enabled', 'on') %}
+      {% if not is_connected or charging_state == 'disconnected' %}
+      <ha-alert alert-type="error">🔴 Not connected to charger</ha-alert>
+      {% elif is_charging and protection_on and current_pct < protection_low %}
+      <ha-alert alert-type="warning">🔋 Charging for battery protection</ha-alert>
+      {% elif is_charging %}
+      <ha-alert alert-type="success">🟢 Charging</ha-alert>
+      {% elif charging_state == 'complete' %}
+      <ha-alert alert-type="success">✅ Charge complete</ha-alert>
+      {% else %}
+      <ha-alert alert-type="warning">🟡 Connected — not charging ({{ charging_state | title }})</ha-alert>
+      {% endif %}
+
+  # ── Main entities ────────────────────────────────────────────────────────
+  - type: entities
+    title: Tesla Charge Schedule
+    entities:
+      - entity: sensor.scylla_charge_start_at
+        name: Start at
+        icon: mdi:clock-start
+      - entity: sensor.scylla_charge_time
+        name: Charge time
+        icon: mdi:timer-outline
+      - entity: input_datetime.scylla_departure_time
+        name: Departure time
+      - entity: sensor.scylla_usable_battery_level
+        name: Current battery %
+      - entity: sensor.scylla_charge_target_pct
+        name: Target battery %
+      - entity: input_number.scylla_set_charge_limit
+        name: Set target %
+        mode: box
+      - entity: sensor.scylla_est_battery_range
+        name: Current range (km)
+      - entity: input_number.scylla_target_range_km
+        name: Set target range (km)
+        mode: box
+      - entity: sensor.scylla_charging_amps
+        name: Amperage setting (car)
+      - entity: input_number.scylla_set_charging_amps
+        name: Set amperage
+        mode: box
+      - entity: input_select.scylla_charging_speed
+        name: Charging speed
+
+
+  # ── Voltage and phase info ────────────────────────────────────────────────
+  - type: markdown
+    content: >
+      {% set slow_v = states('input_number.scylla_slow_voltage') | int(120) %}
+      {% set fast_v = states('input_number.scylla_fast_voltage') | int(240) %}
+      {% set live_voltage = states('sensor.scylla_charger_voltage') | float(0) %}
+      {% set phases = states('sensor.scylla_charger_phases') | int(1) %}
+      {% set slow_phases = 1 if slow_v < 200 else phases %}
+      {% set fast_phases = 2 if fast_v >= 400 else (1 if fast_v < 200 else phases) %}
+      🐢 Slow: **{{ slow_v }}V** · {{ slow_phases }} phase{% if slow_phases > 1 %}s{% endif %}
+      &nbsp;&nbsp;|&nbsp;&nbsp;
+      ⚡ Fast: **{{ fast_v }}V** · {{ fast_phases }} phase{% if fast_phases > 1 %}s{% endif %}
+      {% if live_voltage > 75 %}
+      &nbsp;&nbsp;|&nbsp;&nbsp; 🔌 Live: **{{ live_voltage | int }}V** · {{ phases }} phase{% if phases > 1 %}s{% endif %}
+      {% endif %}
+
+  # ── Range → % conversion display ─────────────────────────────────────────
+  - type: conditional
+    conditions:
+      - condition: numeric_state
+        entity: input_number.scylla_target_range_km
+        above: 0
+    card:
+      type: markdown
+      content: >
+        {% set current_pct = states('sensor.scylla_usable_battery_level') | float(0) %}
+        {% set current_range = states('sensor.scylla_est_battery_range') | float(0) %}
+        {% set target_range = states('input_number.scylla_target_range_km') | float(0) %}
+        {% if current_pct > 0 and current_range > 0 %}
+          {% set full_range = current_range / (current_pct / 100) %}
+          {% set range_pct = [(target_range / full_range * 100) | round(0) | int, 100] | min %}
+          📍 {{ target_range | int }} km → **{{ range_pct }}%**
+          {% if range_pct >= 100 %}⚠️ Range not achievable at current efficiency — will charge to 100%{% endif %}
+        {% endif %}
+
+  # ── Charge history ───────────────────────────────────────────────────────
+  - type: history-graph
+    entities:
+      - entity: switch.scylla_charger
+        name: Charger
+    refresh_interval: 1
+    hours_to_show: 12
+
+  # ── Return home info (only when away) ───────────────────────────────────
+  - type: conditional
+    conditions:
+      - condition: state
+        entity: device_tracker.scylla_location
+        state_not: "home"
+    card:
+      type: markdown
+      content: >
+        {% set current_pct = states('sensor.scylla_usable_battery_level') | float(0) %}
+        {% set return_pct = states('sensor.scylla_return_home_battery_pct') | int(0) %}
+        {% set distance = states('sensor.scylla_distance_to_home') | float(0) %}
+        {% set duration = state_attr('sensor.waze_scylla_to_home', 'duration') | float(0) %}
+        {% set h = (duration // 60) | int %}
+        {% set m = (duration % 60) | int %}
+        {% set time_str = h ~ 'h ' ~ m ~ 'min' if h > 0 else m ~ ' min' %}
+        {% if return_pct > 100 %}
+        🏠 **{{ distance | round(0) | int }} km** home ({{ time_str }}) — needs **{{ return_pct }}%** ⚠️ Not enough charge to make it home!
+        {% elif current_pct < return_pct %}
+        🏠 **{{ distance | round(0) | int }} km** home ({{ time_str }}) — needs **{{ return_pct }}%** ⚠️ Current battery too low to get home!
+        {% else %}
+        🏠 **{{ distance | round(0) | int }} km** home ({{ time_str }}) — needs **{{ return_pct }}%** ({{ (current_pct - return_pct) | int }}% to spare)
+        {% endif %}
+
+  # ── NMC/NCA warning (hidden when battery protection is off, e.g. LFP) ───
+  - type: conditional
+    conditions:
+      - condition: state
+        entity: input_boolean.scylla_battery_protection_enabled
+        state: "on"
+      - condition: numeric_state
+        entity: sensor.scylla_charge_target_pct
+        above: 90
+    card:
+      type: markdown
+      content: >
+        🔴 Warning: charging above 90% accelerates NMC/NCA battery degradation

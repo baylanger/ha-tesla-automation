@@ -1,0 +1,8 @@
+scylla_charging_speed:
+  name: "Scylla charging speed"
+  options:
+    - "Slow 12A (15A breaker)"
+    - "Slow 16A (20A breaker)"
+    - "Fast"
+  initial: "Fast"
+  icon: mdi:speedometer
